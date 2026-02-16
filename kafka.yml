@@ -15,7 +15,7 @@ services:
     volumes:
       - kafka_controller_data:/var/lib/kafka/data
     environment:
-      NODE_HOSTNAME: {{.Node.Hostname}}
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
       KAFKA_PROCESS_ROLES: controller
       KAFKA_LISTENERS: CONTROLLER://0.0.0.0:$KAFKA_CONTROLLER_PORT
       KAFKA_INTER_BROKER_LISTENER_NAME: SECURE
@@ -69,7 +69,7 @@ services:
     volumes:
       - kafka_broker_data:/var/lib/kafka/data
     environment:
-      NODE_HOSTNAME: {{.Node.Hostname}}
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
       KAFKA_PROCESS_ROLES: broker
       KAFKA_LISTENERS: CONTROLLER://0.0.0.0:$KAFKA_CONTROLLER_PORT
       KAFKA_INTER_BROKER_LISTENER_NAME: SECURE
@@ -113,9 +113,9 @@ services:
 
 secrets:
   kafka_keystore:
-    file: ${SECRETS}/kafka-keystore.jks
+    file: ${SECRETS}/kafka.jks
   kafka_truststore:
-    file: ${SECRETS}/kafka-truststore.jks
+    file: ${SECRETS}/kafka.jks
 
 volumes:
   kafka_controller_data:
