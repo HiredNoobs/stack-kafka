@@ -3,5 +3,6 @@
 # Usage: make-user <user>
 
 USER="$1"
+HOSTS=$@
 
-make-keystore "$USER" -o "$SECRETS" 
+make-keystore "$USER" $HOSTS -o "$SECRETS" 

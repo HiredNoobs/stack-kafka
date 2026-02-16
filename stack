@@ -4,7 +4,7 @@
 # Helper functions
 # -----------------------------------------------------
 function build_secrets {
-  make-keystore kafka $BROKER_NODES -o "$SECRETS"
+  make-keystore kafka $BROKER_NODES $BROKER_FQDN_NODES -o "$SECRETS"
   make-truststore kafka "$SECRETS/ca.crt" -o "$SECRETS"
 }
 
@@ -17,17 +17,17 @@ function build_env {
   for node in $BROKER_NODES; do
     # Needed for some tooling
     if [[ ! -v BROKER ]]; then
-      export BROKER="$node:$KAFKA_BROKER_PORT"
+      export BROKER="$node.$DOMAIN:$KAFKA_BROKER_PORT"
     fi
 
-    export BROKERS="${BROKERS}${BROKERS:+ }$node"
+    export BROKERS="${BROKERS}${BROKERS:+ }$node.$DOMAIN"
   done
 
   for node in $CONTROLLER_NODES; do
     controller_id=$(printf "%s" "$node" | grep -o "[0-9]\+")
     controller_id=$(( 1000 + controller_id ))
 
-    controller_voter="${controller_id}@${node}:${KAFKA_CONTROLLER_PORT}"
+    controller_voter="${controller_id}@${node}.${DOMAIN}:${KAFKA_CONTROLLER_PORT}"
     export KAFKA_CONTROLLER_QUORUM_VOTERS="${KAFKA_CONTROLLER_QUORUM_VOTERS}${KAFKA_CONTROLLER_QUORUM_VOTERS:+,}$controller_voter"
   done
 }

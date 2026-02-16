@@ -101,8 +101,6 @@ services:
 
         BROKER_ID=$$(printf "%s" "$$NODE_HOSTNAME" | grep -o "[0-9]\+")
         export KAFKA_NODE_ID=$$BROKER_ID
-
-        [[ $$NODE_HOSTNAME != *.$DOMAIN ]] && export NODE_HOSTNAME="$$NODE_HOSTNAME.$DOMAIN"
         export KAFKA_ADVERTISED_LISTENERS="SECURE://$$NODE_HOSTNAME:$KAFKA_BROKER_PORT"
 
         # Default Apache container entrypoint
