@@ -61,8 +61,11 @@ function stack_tools {
 function stack_env {
   echo
   echo "DOCKER IMAGE       = $KAFKA_IMAGE"
-  echo "KAFKA NODES        = ($KAFKA_REPLICAS)"
-  list "$KAFKA_NODES"
+  echo "CONTROLLER NODES   = ($KAFKA_REPLICAS)"
+  list "$CONTROLLER_NODES"
+  echo
+  echo "BROKER NODES       = ($BROKER_NODES)"
+  list "$BROKER_NODES"
   echo
   echo "CONTROLLER PORT    = $KAFKA_CONTROLLER_PORT"
   echo "BROKER PORT        = $KAFKA_BROKER_PORT"
