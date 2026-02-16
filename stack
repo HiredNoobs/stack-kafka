@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------
+# Helper functions
+# -----------------------------------------------------
+function build_secrets {
+  make-keystore kafka $BROKER_NODES -o "$SECRETS"
+  make-truststore kafka "$SECRETS/ca.crt" -o "$SECRETS"
+}
+
+function build_env {
+  local node controller_id controller_voter
+
+  for node in $BROKER_NODES; do
+    # Needed for some tooling
+    if [[ ! -v BROKER ]]; then
+      export BROKER="$node:$KAFKA_BROKER_PORT"
+    fi
+
+    export BROKERS="${BROKERS}${BROKERS:+ }$node"
+  done
+
+  for node in $CONTROLLER_NODES; do
+    controller_id=$(printf "%s" "$node" | grep -o "[0-9]\+")
+    controller_id=$(( 1000 + controller_id ))
+
+    controller_voter="${controller_id}@${node}:${KAFKA_CONTROLLER_PORT}"
+    export KAFKA_CONTROLLER_QUORUM_VOTERS="${KAFKA_CONTROLLER_QUORUM_VOTERS}${KAFKA_CONTROLLER_QUORUM_VOTERS:+,}$controller_voter"
+  done
+}
+
+# -----------------------------------------------------
+# Stack functions
+# -----------------------------------------------------
+
+function stack_check_env {
+  if [ ! -d "$SECRETS" ]; then
+    log_error "Secrets directory is missing from '$ENVIRONMENT_BASE'."
+    exit 1
+  fi
+}
+
+function stack_discover {
+  export CONTROLLER_REPLICAS=$(count "$CONTROLLER_NODES")
+  export BROKER_REPLICAS=$(count "$BROKER_NODES")
+}
+
+function stack_tools {
+  local tool="$STACK_PATH/tools/$1"
+  shift
+
+  if [[ ! -x "$tool" ]]; then
+    log_error "$tool doesn't exist or isn't executable."
+    exit 1
+  fi
+
+  log_info "Running $tool with args: $@"
+  "$tool" "$@"
+}
+
+function stack_env {
+  echo
+  echo "DOCKER IMAGE       = $KAFKA_IMAGE"
+  echo "KAFKA NODES        = ($KAFKA_REPLICAS)"
+  list "$KAFKA_NODES"
+  echo
+  echo "CONTROLLER PORT    = $KAFKA_CONTROLLER_PORT"
+  echo "BROKER PORT        = $KAFKA_BROKER_PORT"
+  echo
+}
+
+function stack_deploy {
+  build_secrets
+  build_env
+  docker stack deploy --detach=true -c kafka.yml "$STACK"
+}

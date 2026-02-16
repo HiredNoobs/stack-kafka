@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#
+# Usage: make-user <user>
+
+USER="$1"
+
+make-keystore "$USER" -o "$SECRETS" 

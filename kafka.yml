@@ -1,0 +1,122 @@
+services:
+  controller:
+    hostname: controller{{.Task.Slot}}
+    image: $KAFKA_IMAGE
+    ports:
+      - mode: host
+        published: $KAFKA_CONTROLLER_PORT
+        target: $KAFKA_CONTROLLER_PORT
+        protocol: tcp
+    secrets:
+      - source: kafka_keystore
+        target: /opt/kafka/secrets/kafka-keystore.jks
+      - source: kafka_truststore
+        target: /opt/kafka/secrets/kafka-truststore.jks
+    volumes:
+      - kafka_controller_data:/var/lib/kafka/data
+    environment:
+      NODE_HOSTNAME: {{.Node.Hostname}}
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_LISTENERS: CONTROLLER://0.0.0.0:$KAFKA_CONTROLLER_PORT
+      KAFKA_INTER_BROKER_LISTENER_NAME: SECURE
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SECURE:SSL,CONTROLLER:SSL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: $KAFKA_CONTROLLER_QUORUM_VOTERS
+      KAFKA_SUPER_USERS: User:kafka,User:admin
+
+      # TLS
+      KAFKA_SSL_PROTOCOL: TLS
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""  # Using self signed certs
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_PRINCIPAL_MAPPING_RULES: ^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT  # https://docs.confluent.io/platform/current/security/authentication/mutual-tls/tls-principal-mapping.html
+
+      KAFKA_SSL_KEYSTORE_LOCATION: /opt/kafka/secrets/kafka-keystore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /opt/kafka/secrets/kafka-truststore.jks
+
+      # Optimisations
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+    entrypoint: ["/bin/bash"]
+    command:
+      - -c
+      - |
+        set -e
+
+        BROKER_ID=$$(printf "%s" "$$NODE_HOSTNAME" | grep -o "[0-9]\+")
+        export KAFKA_NODE_ID=$$(( 1000 + BROKER_ID ))
+
+        # Default Apache container entrypoint
+        exec /etc/kafka/docker/run
+    deploy:
+      mode: replicated
+      replicas: $CONTROLLER_REPLICAS
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.labels.${STACK}_controller == 1
+  broker:
+    hostname: broker{{.Task.Slot}}
+    image: $KAFKA_IMAGE
+    ports:
+      - mode: host
+        published: $KAFKA_BROKER_PORT
+        target: $KAFKA_BROKER_PORT
+        protocol: tcp
+    secrets:
+      - source: kafka_keystore
+        target: /opt/kafka/secrets/kafka-keystore.jks
+      - source: kafka_truststore
+        target: /opt/kafka/secrets/kafka-truststore.jks
+    volumes:
+      - kafka_broker_data:/var/lib/kafka/data
+    environment:
+      NODE_HOSTNAME: {{.Node.Hostname}}
+      KAFKA_PROCESS_ROLES: broker
+      KAFKA_LISTENERS: CONTROLLER://0.0.0.0:$KAFKA_CONTROLLER_PORT
+      KAFKA_INTER_BROKER_LISTENER_NAME: SECURE
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SECURE:SSL,CONTROLLER:SSL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: $KAFKA_CONTROLLER_QUORUM_VOTERS
+      KAFKA_SUPER_USERS: User:kafka,User:admin
+
+      # TLS
+      KAFKA_SSL_PROTOCOL: TLS
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""  # Using self signed certs
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_PRINCIPAL_MAPPING_RULES: ^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT  # https://docs.confluent.io/platform/current/security/authentication/mutual-tls/tls-principal-mapping.html
+
+      KAFKA_SSL_KEYSTORE_LOCATION: /opt/kafka/secrets/kafka-keystore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /opt/kafka/secrets/kafka-truststore.jks
+
+      # Optimisations
+      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
+    entrypoint: ["/bin/bash"]
+    command:
+      - -c
+      - |
+        set -e
+
+        BROKER_ID=$$(printf "%s" "$$NODE_HOSTNAME" | grep -o "[0-9]\+")
+        export KAFKA_NODE_ID=$$BROKER_ID
+
+        [[ $$NODE_HOSTNAME != *.$DOMAIN ]] && export NODE_HOSTNAME="$$NODE_HOSTNAME.$DOMAIN"
+        export KAFKA_ADVERTISED_LISTENERS="SECURE://$$NODE_HOSTNAME:$KAFKA_BROKER_PORT"
+
+        # Default Apache container entrypoint
+        exec /etc/kafka/docker/run
+    deploy:
+      mode: replicated
+      replicas: $BROKER_REPLICAS
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.labels.${STACK}_broker == 1
+
+secrets:
+  kafka_keystore:
+    file: ${SECRETS}/kafka-keystore.jks
+  kafka_truststore:
+    file: ${SECRETS}/kafka-truststore.jks
+
+volumes:
+  kafka_controller_data:
+  kafka_broker_data:
