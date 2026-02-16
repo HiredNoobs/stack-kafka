@@ -117,9 +117,9 @@ services:
 
 secrets:
   kafka_keystore:
-    file: ${SECRETS}/kafka.jks
+    file: ${SECRETS}/kafka-keystore.jks
   kafka_truststore:
-    file: ${SECRETS}/kafka.jks
+    file: ${SECRETS}/kafka-truststore.jks
 
 volumes:
   kafka_controller_data:
