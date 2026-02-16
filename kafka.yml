@@ -31,7 +31,9 @@ services:
       KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^.*[Cc][Nn]=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT  # https://docs.confluent.io/platform/current/security/authentication/mutual-tls/tls-principal-mapping.html
 
       KAFKA_SSL_KEYSTORE_LOCATION: /opt/kafka/secrets/kafka-keystore.jks
+      KAFKA_SSL_KEYSTORE_PASSWORD: $KAFKA_KEYSTORE_PASSWORD
       KAFKA_SSL_TRUSTSTORE_LOCATION: /opt/kafka/secrets/kafka-truststore.jks
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: $KAFKA_TRUSTSTORE_PASSWORD
 
       # Optimisations
       KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
