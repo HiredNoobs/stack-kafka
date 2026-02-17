@@ -11,8 +11,8 @@ function build_secrets {
 function build_env {
   local node controller_id controller_voter
 
-  export KAFKA_TRUSTSTORE_PASSWORD=$(<"$SECRETS/truststore.pass")
-  export KAFKA_KEYSTORE_PASSWORD=$(<"$SECRETS/keystore.pass")
+  export KAFKA_TRUSTSTORE_PASSWORD=$(<"$SECRETS/kafka-truststore.pass")
+  export KAFKA_KEYSTORE_PASSWORD=$(<"$SECRETS/kafka-keystore.pass")
 
   for node in $BROKER_NODES; do
     # Needed for some tooling
