@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+docker -H unix:///var/run/docker.sock run -it --rm \
+  -v "$SECRETS:/etc/kafka/secrets" "$KAFKA_IMAGE" \
+  /opt/kafka/bin/kafka-acls.sh \
+    --bootstrap-server "$BROKER:$KAFKA_BROKER_PORT" \
+    --command-config /etc/kafka/secrets/admin.properties \
+    "$@"
