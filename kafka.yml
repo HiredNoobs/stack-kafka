@@ -24,7 +24,7 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: $KAFKA_CONTROLLER_QUORUM_VOTERS
 
       KAFKA_SUPER_USERS: User:kafka,User:admin
-      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
 
       # TLS
@@ -83,7 +83,7 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: $KAFKA_CONTROLLER_QUORUM_VOTERS
 
       KAFKA_SUPER_USERS: User:kafka,User:admin
-      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
 
       # TLS
