@@ -13,8 +13,7 @@ KEYSTORE_PASS="$(cat "$SECRETS/${USER}-keystore.pass")"
 
 
 TRUSTSTORE="/etc/kafka/secrets/kafka-truststore.jks"
-TRUSTSTORE_PASS="$(cat "$SECRETS/kafka-keystore.pass")"
-
+TRUSTSTORE_PASS="$(cat "$SECRETS/kafka-truststore.pass")"
 
 PROPERTIES="$SECRETS/${USER}.properties"
 
