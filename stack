@@ -4,8 +4,13 @@
 # Helper functions
 # -----------------------------------------------------
 function build_secrets {
-  make-keystore kafka "$BROKER_NODES $BROKER_FQDN_NODES" -o "$SECRETS"
-  make-truststore kafka "$SECRETS/ca.crt" -o "$SECRETS"
+  if [[ ! -f "$SECRETS/kafka-keystore.jks" ]]; then
+    make-keystore kafka "$BROKER_NODES $BROKER_FQDN_NODES" -o "$SECRETS"
+  fi
+
+  if [[ ! -f "$SECRETS/kafka-truststore.jks" ]]; then
+    make-truststore kafka "$SECRETS/ca.crt" -o "$SECRETS"
+  fi
 }
 
 function build_env {
