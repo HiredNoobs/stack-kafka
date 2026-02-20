@@ -42,12 +42,7 @@ for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
 
   for topic in "${topics[@]}"; do
     for perm in "${perms[@]}"; do
-      if ! "$TOOLS/kafka-acls" --list \
-            | sed 's/\r$//' \
-            | grep -q "principal=$principal" \
-            | grep -q "operation=${perm^^}" \
-            | grep -q "name=$topic"; then
-
+      if ! "$TOOLS/kafka-acls" --list --topic "$topic" | grep -q "principal=$principal"; then
         log_info "Applying ACL: $perm on $topic for $principal"
         "$TOOLS/kafka-acls" \
           --add \
