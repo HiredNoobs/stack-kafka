@@ -23,7 +23,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SECURE:SSL,CONTROLLER:SSL
       KAFKA_CONTROLLER_QUORUM_VOTERS: $KAFKA_CONTROLLER_QUORUM_VOTERS
 
-      KAFKA_SUPER_USERS: User:kafka,User:admin
+      KAFKA_SUPER_USERS: User:kafka;User:admin
       KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
 
@@ -82,7 +82,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SECURE:SSL,CONTROLLER:SSL
       KAFKA_CONTROLLER_QUORUM_VOTERS: $KAFKA_CONTROLLER_QUORUM_VOTERS
 
-      KAFKA_SUPER_USERS: User:kafka,User:admin
+      KAFKA_SUPER_USERS: User:kafka;User:admin
       KAFKA_AUTHORIZER_CLASS_NAME: org.apache.kafka.metadata.authorizer.StandardAuthorizer
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
 
