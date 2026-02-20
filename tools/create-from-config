@@ -13,12 +13,16 @@ for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
   partitions=$(yq -r '.partitions' "$file")
   replication=$(yq -r '.replication_factor' "$file")
 
-  echo "Creating topic: $topic"
-  "$TOOLS/kafka-topics" \
-    --create \
-    --topic "$topic" \
-    --partitions "$partitions" \
-    --replication-factor "$replication"
+  if ! "$TOOLS/kafka-topics" --list | grep -qx "$topic"; then
+    echo "Creating topic: $topic"
+    "$TOOLS/kafka-topics" \
+      --create \
+      --topic "$topic" \
+      --partitions "$partitions" \
+      --replication-factor "$replication"
+  else
+    echo "Topic already exists: $topic"
+  fi
 done
 
 echo "Applying Kafka ACLs…"
@@ -33,13 +37,17 @@ for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
 
   for topic in "${topics[@]}"; do
     for perm in "${perms[@]}"; do
-      echo "Applying ACL: $perm on $topic for $principal"
-      "$TOOLS/kafka-acls" \
-        --add \
-        --allow-principal "$principal" \
-        --"$perm" \
-        --topic "$topic" \
-        --group "$group"
+      if ! "$TOOLS/kafka-acls" --list | grep -q "principal=$principal" | grep -q "operation=${perm^^}" | grep -q "name=$topic"; then
+        echo "Applying ACL: $perm on $topic for $principal"
+        "$TOOLS/kafka-acls" \
+          --add \
+          --allow-principal "$principal" \
+          --"$perm" \
+          --topic "$topic" \
+          --group "$group"
+      else
+        echo "ACL already exists: $perm on $topic for $principal"
+      fi
     done
   done
 done
