@@ -3,6 +3,6 @@
 docker -H unix:///var/run/docker.sock run -it --rm \
   -v "$SECRETS:/etc/kafka/secrets" "$KAFKA_IMAGE" \
   /opt/kafka/bin/kafka-topics.sh \
-    --bootstrap-server "$BROKER:$KAFKA_BROKER_PORT" \
+    --bootstrap-server "$BROKER" \
     --command-config /etc/kafka/secrets/admin.properties \
     "$@"

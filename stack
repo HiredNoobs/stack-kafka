@@ -62,6 +62,8 @@ function stack_tools {
     exit 1
   fi
 
+  build_env
+
   log_info "Running $tool with args: $@"
   "$tool" "$@"
 }
