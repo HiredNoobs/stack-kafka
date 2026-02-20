@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Reads config from $CONFIGS/topics and $CONFIGS/acls
+# and creates the specified topics and ACLs.
+
+TOOLS="${STACK_PATH}/tools"
+
+echo "Applying Kafka topics…"
+for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
+  [ -e "$file" ] || continue
+
+  topic=$(yq '.topic' "$file")
+  partitions=$(yq '.partitions' "$file")
+  replication=$(yq '.replication_factor' "$file")
+
+  echo "Creating topic: $topic"
+  "$TOOLS/kafka-topics" \
+    --create \
+    --topic "$topic" \
+    --partitions "$partitions" \
+    --replication-factor "$replication"
+done
+
+echo "Applying Kafka ACLs…"
+for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
+  [ -e "$file" ] || continue
+
+  principal=$(yq '.principal' "$file")
+  group=$(yq '.group' "$file")
+
+  mapfile -t topics < <(yq '.topics[]' "$file")
+  mapfile -t perms < <(yq '.permissions[]' "$file")
+
+  for topic in "${topics[@]}"; do
+    for perm in "${perms[@]}"; do
+      echo "Applying ACL: $perm on $topic for $principal"
+      "$TOOLS/kafka-acls" \
+        --add \
+        --allow-principal "$principal" \
+        --"$perm" \
+        --topic "$topic" \
+        --group "$group"
+    done
+  done
+done

@@ -1,0 +1,8 @@
+principal: User:contentbot
+group: contentbot-consumers
+topics:
+  - contentbot.content
+  - contentbot.channels
+permissions:
+  - producer
+  - consumer
