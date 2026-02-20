@@ -3,9 +3,11 @@
 # Reads config from $CONFIGS/topics and $CONFIGS/acls
 # and creates the specified topics and ACLs.
 
+source "$TOOLS_BIN/lib/logging.sh"
+
 TOOLS="${STACK_PATH}/tools"
 
-echo "Applying Kafka topics…"
+log_info "Applying Kafka topics…"
 for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
   [ -e "$file" ] || continue
 
@@ -13,19 +15,22 @@ for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
   partitions=$(yq -r '.partitions' "$file")
   replication=$(yq -r '.replication_factor' "$file")
 
-  if ! "$TOOLS/kafka-topics" --list | grep -qx "$topic"; then
-    echo "Creating topic: $topic"
+  if ! "$TOOLS/kafka-topics" --list \
+        | sed 's/\r$//' \
+        | grep -qx "$topic"; then
+
+    log_info "Creating topic: $topic"
     "$TOOLS/kafka-topics" \
       --create \
       --topic "$topic" \
       --partitions "$partitions" \
       --replication-factor "$replication"
   else
-    echo "Topic already exists: $topic"
+    log_info "Topic already exists: $topic"
   fi
 done
 
-echo "Applying Kafka ACLs…"
+log_info "Applying Kafka ACLs…"
 for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
   [ -e "$file" ] || continue
 
@@ -37,8 +42,13 @@ for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
 
   for topic in "${topics[@]}"; do
     for perm in "${perms[@]}"; do
-      if ! "$TOOLS/kafka-acls" --list | grep -q "principal=$principal" | grep -q "operation=${perm^^}" | grep -q "name=$topic"; then
-        echo "Applying ACL: $perm on $topic for $principal"
+      if ! "$TOOLS/kafka-acls" --list \
+            | sed 's/\r$//' \
+            | grep -q "principal=$principal" \
+            | grep -q "operation=${perm^^}" \
+            | grep -q "name=$topic"; then
+
+        log_info "Applying ACL: $perm on $topic for $principal"
         "$TOOLS/kafka-acls" \
           --add \
           --allow-principal "$principal" \
@@ -46,7 +56,7 @@ for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
           --topic "$topic" \
           --group "$group"
       else
-        echo "ACL already exists: $perm on $topic for $principal"
+        log_info "ACL already exists: $perm on $topic for $principal"
       fi
     done
   done
