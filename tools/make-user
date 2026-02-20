@@ -16,7 +16,7 @@ TRUSTSTORE="/etc/kafka/secrets/kafka-truststore.jks"
 TRUSTSTORE_PASS="$(cat "$SECRETS/kafka-keystore.pass")"
 
 
-PROPERTIES="/etc/kafka/secrets/${USER}.properties"
+PROPERTIES="$SECRETS/${USER}.properties"
 
 cat > "$PROPERTIES" <<EOF
 security.protocol=SSL
