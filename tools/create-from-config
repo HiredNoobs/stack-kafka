@@ -51,7 +51,7 @@ for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
           --topic "$topic" \
           --group "$group"
       else
-        log_info "ACL already exists: $perm on $topic for $principal"
+        log_info "Some ACLs already exist for $principal."
       fi
     done
   done
