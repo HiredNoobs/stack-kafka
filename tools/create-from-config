@@ -54,8 +54,8 @@ for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
 
       all_exist=true
       for operation in "${expanded[@]}"; do
-        if ! "$TOOLS/kafka-acls" --list --topic "$topic" \
-             | grep -q "principal=$principal" \
+        if ! "$TOOLS/kafka-acls" --list --topic "$topic"  \
+             | grep "principal=$principal" \
              | grep -q "operation=$operation"; then
           all_exist=false
         fi
