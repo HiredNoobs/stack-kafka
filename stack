@@ -3,6 +3,7 @@
 # -----------------------------------------------------
 # Helper functions
 # -----------------------------------------------------
+
 function build_secrets {
   if [[ ! -f "$SECRETS/kafka-keystore.jks" ]]; then
     make-keystore kafka "$BROKER_NODES $BROKER_FQDN_NODES" -o "$SECRETS"
@@ -64,7 +65,7 @@ function stack_tools {
 
   build_env
 
-  log_info "Running $tool with args: $@"
+  log_info "Running $tool with args: $*"
   "$tool" "$@"
 }
 

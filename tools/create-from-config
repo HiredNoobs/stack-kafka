@@ -7,28 +7,9 @@ source "$TOOLS_BIN/lib/logging.sh"
 
 TOOLS="${STACK_PATH}/tools"
 
-log_info "Applying Kafka topics…"
-for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
-  [ -e "$file" ] || continue
-
-  topic=$(yq -r '.topic' "$file")
-  partitions=$(yq -r '.partitions' "$file")
-  replication=$(yq -r '.replication_factor' "$file")
-
-  if ! "$TOOLS/kafka-topics" --list \
-        | sed 's/\r$//' \
-        | grep -qx "$topic"; then
-
-    log_info "Creating topic: $topic"
-    "$TOOLS/kafka-topics" \
-      --create \
-      --topic "$topic" \
-      --partitions "$partitions" \
-      --replication-factor "$replication"
-  else
-    log_info "Topic already exists: $topic"
-  fi
-done
+# -----------------------------------------------------
+# Helper functions
+# -----------------------------------------------------
 
 function expand_perms {
   case "$1" in
@@ -38,41 +19,86 @@ function expand_perms {
   esac
 }
 
-log_info "Applying Kafka ACLs…"
-for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
-  [ -e "$file" ] || continue
+# -----------------------------------------------------
+# Functions
+# -----------------------------------------------------
 
-  principal=$(yq -r '.principal' "$file")
-  group=$(yq -r '.group' "$file")
+function create_topics {
+  for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
+    [ -e "$file" ] || continue
 
-  mapfile -t topics < <(yq -r '.topics[]' "$file")
-  mapfile -t perms < <(yq -r '.permissions[]' "$file")
+    topic=$(yq -r '.topic' "$file")
+    partitions=$(yq -r '.partitions' "$file")
+    replication=$(yq -r '.replication_factor' "$file")
 
-  for topic in "${topics[@]}"; do
-    for perm in "${perms[@]}"; do
-      read -r -a expanded <<<"$(expand_perms "$perm")"
+    if ! "$TOOLS/kafka-topics" --list \
+          | sed 's/\r$//' \
+          | grep -qx "$topic"; then
 
-      all_exist=true
-      for operation in "${expanded[@]}"; do
-        if ! "$TOOLS/kafka-acls" --list --topic "$topic"  \
-             | grep "principal=$principal" \
-             | grep -q "operation=$operation"; then
-          all_exist=false
-        fi
-      done
-
-      if $all_exist; then
-        log_info "All ACLs for $perm already exist for $principal on $topic."
-        continue
-      fi
-
-      log_info "Applying ACL: $perm on $topic for $principal"
-      "$TOOLS/kafka-acls" \
-        --add \
-        --allow-principal "$principal" \
-        --"$perm" \
+      log_info "Creating topic: $topic"
+      "$TOOLS/kafka-topics" \
+        --create \
         --topic "$topic" \
-        --group "$group"
+        --partitions "$partitions" \
+        --replication-factor "$replication"
+    else
+      log_info "Topic already exists: $topic"
+    fi
+  done
+}
+
+function create_acls {
+  for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
+    [ -e "$file" ] || continue
+
+    principal=$(yq -r '.principal' "$file")
+    user=${principal#"User:"}
+    group=$(yq -r '.group' "$file")
+
+    mapfile -t topics < <(yq -r '.topics[]' "$file")
+    mapfile -t perms < <(yq -r '.permissions[]' "$file")
+
+    if [ ! -f "$SECRETS/$user-keystore.jks" ]; then
+      log_info "Creating new certs and keystore..."
+      "$TOOLS/make-user" "$user"
+    fi
+
+    for topic in "${topics[@]}"; do
+      for perm in "${perms[@]}"; do
+        read -r -a expanded <<<"$(expand_perms "$perm")"
+
+        all_exist=true
+        for operation in "${expanded[@]}"; do
+          if ! "$TOOLS/kafka-acls" --list --topic "$topic"  \
+              | grep "principal=$principal" \
+              | grep -q "operation=$operation"; then
+            all_exist=false
+          fi
+        done
+
+        if $all_exist; then
+          log_info "All ACLs for $perm already exist for $principal on $topic."
+          continue
+        fi
+
+        log_info "Applying ACL: $perm on $topic for $principal"
+        "$TOOLS/kafka-acls" \
+          --add \
+          --allow-principal "$principal" \
+          --"$perm" \
+          --topic "$topic" \
+          --group "$group"
+      done
     done
   done
-done
+}
+
+# -----------------------------------------------------
+# Main
+# -----------------------------------------------------
+
+log_info "Creating topics..."
+create_topics
+
+log_info "Creating users and ACLs"
+create_acls
