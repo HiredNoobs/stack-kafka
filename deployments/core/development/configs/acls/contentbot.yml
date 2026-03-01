@@ -1,5 +1,7 @@
 principal: User:contentbot
 group: contentbot-consumers
+hosts:
+  - prod-contentbot001
 topics:
   - contentbot.content
   - contentbot.channels

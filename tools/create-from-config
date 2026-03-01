@@ -24,6 +24,8 @@ function expand_perms {
 # -----------------------------------------------------
 
 function create_topics {
+  local file topic partitions replication
+
   for file in "$CONFIGS/topics/"*.yml "$CONFIGS/topics/"*.yaml; do
     [ -e "$file" ] || continue
 
@@ -48,19 +50,27 @@ function create_topics {
 }
 
 function create_acls {
+  local file principal user group topics perms fqdn_hosts topic perm expanded operation all_exist
+
   for file in "$CONFIGS/acls/"*.yml "$CONFIGS/acls/"*.yaml; do
     [ -e "$file" ] || continue
 
     principal=$(yq -r '.principal' "$file")
     user=${principal#"User:"}
     group=$(yq -r '.group' "$file")
+    hosts=$(yq -r '.hosts[]' "$file")
 
     mapfile -t topics < <(yq -r '.topics[]' "$file")
     mapfile -t perms < <(yq -r '.permissions[]' "$file")
 
+    fqdn_hosts=""
+    for host in $hosts; do
+      fqdn_hosts+="$host $host.$DOMAIN "
+    done
+
     if [ ! -f "$SECRETS/$user-keystore.jks" ]; then
       log_info "Creating new certs and keystore..."
-      "$TOOLS/make-user" "$user"
+      "$TOOLS/make-user" "$user" "$fqdn_hosts"
     fi
 
     for topic in "${topics[@]}"; do
